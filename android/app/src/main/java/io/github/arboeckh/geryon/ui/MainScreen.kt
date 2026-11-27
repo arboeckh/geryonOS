@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -37,6 +39,10 @@ fun MainScreen(
     message: String?,
     onWriteModeChange: (Boolean) -> Unit,
     onOpenNfcSettings: () -> Unit,
+    /** Tags to write: tag id to label. A null id writes a blank tag with a random id. */
+    writePresets: List<Pair<String?, String>> = emptyList(),
+    writePresetId: String? = null,
+    onWritePresetChange: (String?) -> Unit = {},
 ) {
     Scaffold { padding ->
         Column(
@@ -75,6 +81,18 @@ fun MainScreen(
                     onClick = { onWriteModeChange(true) },
                     shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                 ) { Text("Write tag") }
+            }
+
+            if (writeMode && writePresets.isNotEmpty()) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    writePresets.forEach { (id, label) ->
+                        FilterChip(
+                            selected = id == writePresetId,
+                            onClick = { onWritePresetChange(id) },
+                            label = { Text(label) },
+                        )
+                    }
+                }
             }
 
             if (message != null) {

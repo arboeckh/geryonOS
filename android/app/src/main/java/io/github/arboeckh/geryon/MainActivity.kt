@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.IntentCompat
+import io.github.arboeckh.geryon.block.Defaults
 import io.github.arboeckh.geryon.block.ScanOutcome
 import io.github.arboeckh.geryon.nfc.TagScan
 import io.github.arboeckh.geryon.nfc.firstUri
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
     private var lastScan by mutableStateOf<TagScan?>(null)
     private var message by mutableStateOf<String?>(null)
     private var pendingGrant by mutableStateOf<ScanOutcome.PickGrant?>(null)
+    private var writePresetId by mutableStateOf<String?>(Defaults.GRANT_TAG_ID)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +55,9 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
                         message = null
                     },
                     onOpenNfcSettings = { startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) },
+                    writePresets = Defaults.presetBindings.map { it.tagId to it.name } + (null to "Blank"),
+                    writePresetId = writePresetId,
+                    onWritePresetChange = { writePresetId = it },
                 )
                 pendingGrant?.let { request ->
                     GrantPicker(
@@ -124,11 +129,14 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
     /** Called on a binder thread for every tag tapped while the app is in the foreground. */
     override fun onTagDiscovered(tag: Tag) {
         if (writeMode) {
-            val result = writeGeryonTag(tag, packageName)
+            val preset = writePresetId
+            val result = if (preset != null) writeGeryonTag(tag, packageName, preset) else writeGeryonTag(tag, packageName)
             runOnUiThread {
                 result.onSuccess {
                     lastScan = it
-                    message = "Tag written. Close the app, then tap the tag again to test the launch."
+                    val name = geryon.blocks.config.value.binding(it.geryonId.orEmpty())?.name
+                    message = if (name != null) "Tag written: $name. Tap it again to use it."
+                    else "Tag written. Close the app, then tap the tag again to test the launch."
                     writeMode = false
                 }.onFailure {
                     message = "Write failed: ${it.message}"
