@@ -14,8 +14,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -25,7 +23,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.arboeckh.geryon.block.BlockConfig
@@ -184,11 +181,10 @@ private fun WarningCard(title: String, body: String, action: String?, onAction: 
 @Composable
 private fun CountdownRow(title: String, subtitle: String, onEnd: () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
-        ListItem(
+        ListRow(
             headlineContent = { Text(title) },
             supportingContent = { Text(subtitle) },
             trailingContent = { TextButton(onClick = onEnd) { Text("End") } },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         )
     }
 }

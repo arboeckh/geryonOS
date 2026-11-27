@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -151,4 +153,38 @@ fun ConfirmDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+}
+
+/**
+ * A list row: optional leading/trailing slots around overline, headline and supporting text.
+ * Our own because material3's ListItem is mid-migration to a new API.
+ */
+@Composable
+fun ListRow(
+    headlineContent: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    overlineContent: (@Composable () -> Unit)? = null,
+    supportingContent: (@Composable () -> Unit)? = null,
+    leadingContent: (@Composable () -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
+) {
+    val colors = MaterialTheme.colorScheme
+    val type = MaterialTheme.typography
+    Row(
+        modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        if (leadingContent != null) Box { leadingContent() }
+        Column(Modifier.weight(1f)) {
+            if (overlineContent != null) {
+                ProvideTextStyle(type.labelSmall.copy(color = colors.onSurfaceVariant)) { overlineContent() }
+            }
+            ProvideTextStyle(type.bodyLarge.copy(color = colors.onSurface)) { headlineContent() }
+            if (supportingContent != null) {
+                ProvideTextStyle(type.bodyMedium.copy(color = colors.onSurfaceVariant)) { supportingContent() }
+            }
+        }
+        if (trailingContent != null) Box { trailingContent() }
+    }
 }

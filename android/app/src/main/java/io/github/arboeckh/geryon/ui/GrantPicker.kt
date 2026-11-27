@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +16,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.arboeckh.geryon.block.Decision
@@ -49,7 +46,7 @@ fun GrantPicker(
     }
 
     ListDialog(title = "Unlock with “$tagName”", onDismiss = onDismiss) {
-        Column(Modifier.padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             MinutesStepper(minutes, { minutes = it })
             if (options.size > 5) SearchField(query, { query = it }, "Search", Modifier.padding(top = 8.dp))
         }
@@ -63,7 +60,7 @@ fun GrantPicker(
         LazyColumn(Modifier.padding(top = 8.dp)) {
             items(shown, key = { it.target.id }) { option ->
                 val d = option.decision
-                ListItem(
+                ListRow(
                     headlineContent = { Text(option.target.name) },
                     supportingContent = {
                         Text(
@@ -75,7 +72,6 @@ fun GrantPicker(
                             },
                         )
                     },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.fillMaxWidth().clickable { onPick(option.target, minutes) }.padding(horizontal = 8.dp),
                 )
             }
