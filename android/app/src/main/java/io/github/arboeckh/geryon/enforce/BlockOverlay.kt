@@ -37,7 +37,7 @@ class BlockOverlay(private val context: Context) {
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.TRANSLUCENT,
+            PixelFormat.OPAQUE,
         )
         windowManager.addView(v, params)
         view = v
@@ -57,7 +57,8 @@ class BlockOverlay(private val context: Context) {
         return LinearLayout(themed).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setBackgroundColor(Color.argb(250, 18, 18, 20))
+            // Fully opaque: the blocked app opening and closing underneath must not show through.
+            setBackgroundColor(Color.rgb(18, 18, 20))
             setPadding(dp(32), dp(32), dp(32), dp(32))
             isFocusable = true
             isFocusableInTouchMode = true
