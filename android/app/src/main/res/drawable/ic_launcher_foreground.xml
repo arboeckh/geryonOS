@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder: three nested arcs (a nod to Geryon's three bodies / NFC waves). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E8E6F0"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M46,40 A16,16 0 0,1 46,68" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E8E6F0"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M54,32 A26,26 0 0,1 54,76" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E8E6F0"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M62,24 A36,36 0 0,1 62,84" />
+    <path
+        android:fillColor="#E8E6F0"
+        android:pathData="M40,54 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+</vector>
