@@ -31,15 +31,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Shown in place of a blocked app. Own task so it never drags the main screen along. -->
-        <activity
-            android:name=".enforce.BlockedActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTask"
-            android:noHistory="true"
-            android:taskAffinity="io.github.arboeckh.geryon.blocked" />
-
         <service
             android:name=".enforce.AppBlockerService"
             android:exported="true"

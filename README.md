@@ -25,6 +25,6 @@ Code lives in `android/app/src/main/java/io/github/arboeckh/geryon/`.
   - **Config**: *profiles* (block or allow rules on targets and categories), the always-on base profile, and *tag bindings* (tag id → action).
   - **State**: active profiles, timed grants, and whether the base profile is paused.
   - **Policy**: decides each app or domain. The stack, top layer wins: hard → grants → active profiles (newest first) → base → allow.
-- `enforce/`: carries out the policy. `AppBlocker` is an accessibility service that sends blocked apps home. Domain blocking is a DNS VPN (in progress).
+- `enforce/`: carries out the policy. `AppBlocker` is an accessibility service that covers a blocked app with an overlay the moment it opens, then sends it home. Domain blocking is a DNS VPN (in progress).
 
 Tag actions: start a profile on a timer, toggle a profile, grant (pick one target to unlock for N minutes), and lockdown (clear grants and resume the base profile).

@@ -35,6 +35,7 @@ object AppBlocker : Enforcer {
 class AppBlockerService : AccessibilityService() {
 
     private var scope: CoroutineScope? = null
+    private var overlay: BlockOverlay? = null
 
     /** The app in front, as last reported. Null while geryon itself is in front. */
     private var foreground: String? = null
@@ -47,6 +48,7 @@ class AppBlockerService : AccessibilityService() {
             add("com.android.systemui")
             getSystemService(InputMethodManager::class.java)?.enabledInputMethodList?.forEach { add(it.packageName) }
         }
+        overlay = BlockOverlay(this)
         scope = MainScope().also { s ->
             // A new policy (grant ended, profile started, ...) applies to whatever is open now.
             s.launch { geryon.blocks.policy.collect { check(foreground, it) } }
@@ -57,7 +59,14 @@ class AppBlockerService : AccessibilityService() {
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
         val pkg = event.packageName?.toString() ?: return
         when (pkg) {
-            packageName -> foreground = null
+            packageName -> {
+                // geryon's own screen came forward (e.g. a tag was scanned): don't cover it.
+                // Events for the overlay window itself don't name one of our activities; ignore those.
+                if (event.className?.startsWith(packageName) == true) {
+                    foreground = null
+                    overlay?.hide()
+                }
+            }
             in passthrough -> return
             else -> {
                 foreground = pkg
@@ -70,11 +79,15 @@ class AppBlockerService : AccessibilityService() {
         if (pkg == null) return
         val subject = Subject.App(pkg)
         val decision = policy.decide(subject)
-        if (!decision.blocked) return
+        if (!decision.blocked) {
+            if (overlay?.shownFor == pkg) overlay?.hide()
+            return
+        }
 
         val name = policy.index.match(subject).targets.firstNotNullOfOrNull { policy.index.targets[it]?.name } ?: pkg
+        // Cover the app first so it's never visible, then send it to the background.
+        overlay?.show(pkg, name, decision)
         performGlobalAction(GLOBAL_ACTION_HOME)
-        startActivity(BlockedActivity.intent(this, name, decision))
     }
 
     override fun onInterrupt() = Unit
@@ -82,6 +95,8 @@ class AppBlockerService : AccessibilityService() {
     override fun onDestroy() {
         scope?.cancel()
         scope = null
+        overlay?.hide()
+        overlay = null
         super.onDestroy()
     }
 }
