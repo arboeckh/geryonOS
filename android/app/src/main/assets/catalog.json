@@ -96,6 +96,12 @@
       "name": "Gambling",
       "hard": true,
       "domains": ["bet365.com", "pokerstars.com", "draftkings.com", "fanduel.com", "betway.com", "williamhill.com", "stake.com", "888casino.com", "betfair.com", "paddypower.com", "unibet.com", "bwin.com"]
+    },
+    {
+      "id": "doh",
+      "name": "Encrypted DNS",
+      "hard": true,
+      "domains": ["use-application-dns.net", "dns.google", "dns.google.com", "cloudflare-dns.com", "one.one.one.one", "dns.quad9.net", "dns.adguard-dns.com", "dns.adguard.com", "doh.opendns.com", "dns.nextdns.io", "doh.cleanbrowsing.org", "doh.mullvad.net", "dns.mullvad.net", "dns.controld.com", "freedns.controld.com"]
     }
   ]
 }
