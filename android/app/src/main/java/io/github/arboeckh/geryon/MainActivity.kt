@@ -5,80 +5,48 @@ import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.activity.viewModels
 import androidx.core.content.IntentCompat
-import io.github.arboeckh.geryon.block.ScanOutcome
 import io.github.arboeckh.geryon.nfc.TagScan
 import io.github.arboeckh.geryon.nfc.firstUri
 import io.github.arboeckh.geryon.nfc.geryonIdFrom
 import io.github.arboeckh.geryon.nfc.readTag
 import io.github.arboeckh.geryon.nfc.toHex
 import io.github.arboeckh.geryon.nfc.writeGeryonTag
+import io.github.arboeckh.geryon.ui.AppModel
+import io.github.arboeckh.geryon.ui.GeryonRoot
 import io.github.arboeckh.geryon.ui.GeryonTheme
-import io.github.arboeckh.geryon.ui.GrantPicker
-import io.github.arboeckh.geryon.ui.MainScreen
 import io.github.arboeckh.geryon.ui.NfcStatus
 
 class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
 
     private var nfcAdapter: NfcAdapter? = null
-
-    private var nfcStatus by mutableStateOf(NfcStatus.Unavailable)
-    private var writeMode by mutableStateOf(false)
-    private var lastScan by mutableStateOf<TagScan?>(null)
-    private var message by mutableStateOf<String?>(null)
-    private var pendingGrant by mutableStateOf<ScanOutcome.PickGrant?>(null)
+    private val model: AppModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
-        handleTagIntent(intent)
+        // Only on a fresh launch: after rotation the same intent would run the tag action twice.
+        if (savedInstanceState == null) handleTagIntent(intent)
 
         setContent {
-            GeryonTheme {
-                MainScreen(
-                    nfcStatus = nfcStatus,
-                    writeMode = writeMode,
-                    lastScan = lastScan,
-                    message = message,
-                    onWriteModeChange = {
-                        writeMode = it
-                        message = null
-                    },
-                    onOpenNfcSettings = { startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) },
-                )
-                pendingGrant?.let { request ->
-                    GrantPicker(
-                        request = request,
-                        onPick = { target ->
-                            pendingGrant = null
-                            message = geryon.blocks.grant(target.id, request.minutes).fold(
-                                onSuccess = { "${target.name} unlocked for ${request.minutes} min" },
-                                onFailure = { it.message ?: "Couldn't unlock ${target.name}" },
-                            )
-                        },
-                        onDismiss = { pendingGrant = null },
-                    )
-                }
-            }
+            GeryonTheme { GeryonRoot(model) }
         }
     }
 
     override fun onResume() {
         super.onResume()
         val adapter = nfcAdapter
-        nfcStatus = when {
+        model.nfcStatus = when {
             adapter == null -> NfcStatus.Unavailable
             !adapter.isEnabled -> NfcStatus.Off
             else -> NfcStatus.Ready
         }
+        model.onResumed()
         // While geryon is in the foreground it reads every tag itself instead of
         // letting Android dispatch intents to other apps.
         adapter?.enableReaderMode(this, this, READER_FLAGS, null)
@@ -101,46 +69,27 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
         val ndef = IntentCompat.getParcelableArrayExtra(intent, NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
             ?.firstOrNull() as? NdefMessage
         val uri = intent.data ?: firstUri(ndef)
-        lastScan = TagScan(
+        val scan = TagScan(
             uid = tag?.id?.toHex() ?: "unknown",
             geryonId = geryonIdFrom(uri),
             uri = uri?.toString(),
             source = TagScan.Source.LaunchedApp,
         )
-        message = lastScan?.geryonId?.let(::runTagAction)
+        model.onTagRead(scan, geryon.blocks)
     }
 
-    /** Runs whatever the tag is bound to. Returns the message to show. Main thread only. */
-    private fun runTagAction(tagId: String): String? =
-        when (val outcome = geryon.blocks.onTagScanned(tagId)) {
-            is ScanOutcome.Unbound -> "This tag isn't set up yet."
-            is ScanOutcome.Applied -> outcome.message
-            is ScanOutcome.PickGrant -> {
-                pendingGrant = outcome
-                null
-            }
-        }
-
-    /** Called on a binder thread for every tag tapped while the app is in the foreground. */
+    /**
+     * Called on a binder thread for every tag tapped while the app is in the foreground.
+     * While the scan screen is open, a tag without a geryon id gets one written (the tag is
+     * only connected during this callback, so the write has to happen here).
+     */
     override fun onTagDiscovered(tag: Tag) {
-        if (writeMode) {
+        val scan = readTag(tag)
+        if (model.capturing != null && scan.geryonId == null) {
             val result = writeGeryonTag(tag, packageName)
-            runOnUiThread {
-                result.onSuccess {
-                    lastScan = it
-                    message = "Tag written. Close the app, then tap the tag again to test the launch."
-                    writeMode = false
-                }.onFailure {
-                    message = "Write failed: ${it.message}"
-                }
-            }
+            runOnUiThread { model.onTagWritten(result, geryon.blocks) }
         } else {
-            val scan = readTag(tag)
-            runOnUiThread {
-                lastScan = scan
-                message = scan.geryonId?.let(::runTagAction)
-                    ?: if (scan.geryonId == null) "Not a geryon tag. Switch to Write to set it up." else null
-            }
+            runOnUiThread { model.onTagRead(scan, geryon.blocks) }
         }
     }
 
