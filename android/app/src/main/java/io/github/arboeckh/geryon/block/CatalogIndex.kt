@@ -34,12 +34,16 @@ class CatalogIndex(
         for (c in catalog.categories) for (t in c.targets) getOrPut(t) { mutableSetOf() } += c.id
     }
 
-    /** Loose domains per category: catalogue entries plus external lists. */
-    private val categoryDomains: Map<String, Set<String>> = buildMap {
+    /**
+     * Loose domains per category: catalogue entries plus external lists. Kept as separate
+     * sets rather than merged, so a multi-million-entry list is never copied.
+     */
+    private val categoryDomains: Map<String, List<Set<String>>> = buildMap {
         for (c in catalog.categories) {
             val extra = extraCategoryDomains[c.id].orEmpty()
             val own = c.domains.mapTo(HashSet()) { normalizeDomain(it) }
-            if (own.isNotEmpty() || extra.isNotEmpty()) put(c.id, if (extra.isEmpty()) own else own + extra)
+            val sets = listOf(own, extra).filter { it.isNotEmpty() }
+            if (sets.isNotEmpty()) put(c.id, sets)
         }
     }
 
@@ -67,8 +71,8 @@ class CatalogIndex(
         for (s in suffixes) domainToTargets[s]?.let { targets += it }
 
         val categories = HashSet(categoriesOf(targets))
-        for ((categoryId, domains) in categoryDomains) {
-            if (categoryId !in categories && suffixes.any { it in domains }) categories += categoryId
+        for ((categoryId, sets) in categoryDomains) {
+            if (categoryId !in categories && sets.any { domains -> suffixes.any { it in domains } }) categories += categoryId
         }
         return if (targets.isEmpty() && categories.isEmpty()) Match.None else Match(targets, categories)
     }

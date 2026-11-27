@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-feature android:name="android.hardware.nfc" android:required="true" />
 
     <application
@@ -42,6 +46,29 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/app_blocker" />
+        </service>
+
+        <!-- Invisible: asks for VPN consent and starts the DNS VPN. -->
+        <activity
+            android:name=".enforce.dns.VpnSetupActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="false"
+            android:taskAffinity="io.github.arboeckh.geryon.vpnsetup"
+            android:theme="@style/Theme.Geryon.Translucent" />
+
+        <!-- Local DNS-only VPN that answers blocked domains itself. -->
+        <service
+            android:name=".enforce.dns.DnsVpnService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Local DNS filter (VpnService) that blocks domains the user chose; no traffic leaves the device through it." />
         </service>
     </application>
 </manifest>
