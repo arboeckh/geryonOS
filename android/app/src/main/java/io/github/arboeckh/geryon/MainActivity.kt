@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.IntentCompat
+import io.github.arboeckh.geryon.block.ScanOutcome
 import io.github.arboeckh.geryon.nfc.TagScan
 import io.github.arboeckh.geryon.nfc.firstUri
 import io.github.arboeckh.geryon.nfc.geryonIdFrom
@@ -20,6 +21,7 @@ import io.github.arboeckh.geryon.nfc.readTag
 import io.github.arboeckh.geryon.nfc.toHex
 import io.github.arboeckh.geryon.nfc.writeGeryonTag
 import io.github.arboeckh.geryon.ui.GeryonTheme
+import io.github.arboeckh.geryon.ui.GrantPicker
 import io.github.arboeckh.geryon.ui.MainScreen
 import io.github.arboeckh.geryon.ui.NfcStatus
 
@@ -31,6 +33,7 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
     private var writeMode by mutableStateOf(false)
     private var lastScan by mutableStateOf<TagScan?>(null)
     private var message by mutableStateOf<String?>(null)
+    private var pendingGrant by mutableStateOf<ScanOutcome.PickGrant?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +54,19 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
                     },
                     onOpenNfcSettings = { startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) },
                 )
+                pendingGrant?.let { request ->
+                    GrantPicker(
+                        request = request,
+                        onPick = { target ->
+                            pendingGrant = null
+                            message = geryon.blocks.grant(target.id, request.minutes).fold(
+                                onSuccess = { "${target.name} unlocked for ${request.minutes} min" },
+                                onFailure = { it.message ?: "Couldn't unlock ${target.name}" },
+                            )
+                        },
+                        onDismiss = { pendingGrant = null },
+                    )
+                }
             }
         }
     }
@@ -91,8 +107,19 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
             uri = uri?.toString(),
             source = TagScan.Source.LaunchedApp,
         )
-        message = null
+        message = lastScan?.geryonId?.let(::runTagAction)
     }
+
+    /** Runs whatever the tag is bound to. Returns the message to show. Main thread only. */
+    private fun runTagAction(tagId: String): String? =
+        when (val outcome = geryon.blocks.onTagScanned(tagId)) {
+            is ScanOutcome.Unbound -> "This tag isn't set up yet."
+            is ScanOutcome.Applied -> outcome.message
+            is ScanOutcome.PickGrant -> {
+                pendingGrant = outcome
+                null
+            }
+        }
 
     /** Called on a binder thread for every tag tapped while the app is in the foreground. */
     override fun onTagDiscovered(tag: Tag) {
@@ -111,7 +138,8 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
             val scan = readTag(tag)
             runOnUiThread {
                 lastScan = scan
-                message = if (scan.geryonId == null) "Not a geryon tag. Switch to Write to set it up." else null
+                message = scan.geryonId?.let(::runTagAction)
+                    ?: if (scan.geryonId == null) "Not a geryon tag. Switch to Write to set it up." else null
             }
         }
     }

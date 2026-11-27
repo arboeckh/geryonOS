@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">geryon</string>
+    <string name="app_blocker_label">geryon app blocker</string>
+    <string name="app_blocker_description">Lets geryon close apps you have blocked. geryon only looks at which app is in front, never at what is on screen.</string>
 </resources>

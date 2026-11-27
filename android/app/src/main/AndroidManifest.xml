@@ -5,6 +5,7 @@
     <uses-feature android:name="android.hardware.nfc" android:required="true" />
 
     <application
+        android:name=".GeryonApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -29,5 +30,27 @@
                 <data android:scheme="geryon" android:host="tag" />
             </intent-filter>
         </activity>
+
+        <!-- Shown in place of a blocked app. Own task so it never drags the main screen along. -->
+        <activity
+            android:name=".enforce.BlockedActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:noHistory="true"
+            android:taskAffinity="io.github.arboeckh.geryon.blocked" />
+
+        <service
+            android:name=".enforce.AppBlockerService"
+            android:exported="true"
+            android:label="@string/app_blocker_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/app_blocker" />
+        </service>
     </application>
 </manifest>
