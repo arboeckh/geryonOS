@@ -38,7 +38,7 @@ object DomainBlocker : Enforcer {
                 ),
             )
         }
-        if (DnsVpnService.running.value && DnsVpnService.lockdown.value) {
+        if (DnsVpnService.running.value && DnsVpnService.lockdown) {
             add(
                 EnforcerProblem(
                     "Internet is cut off by VPN lockdown",

@@ -76,8 +76,8 @@ class DnsVpnService : VpnService() {
             }
             tunnel = Tunnel(pfd).also { it.start() }
             _running.value = true
+            instance = this
             // A DNS-only VPN can't work under lockdown: everything outside the tunnel is dropped.
-            _lockdown.value = isLockdownEnabled
             if (isLockdownEnabled) Log.w(TAG, "VPN lockdown is on: all non-DNS traffic will be blocked")
             // geryon is excluded from its own VPN, so its default network is the real one.
             runCatching { getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(networkCallback) }
@@ -142,7 +142,7 @@ class DnsVpnService : VpnService() {
         tunnel?.stop()
         tunnel = null
         _running.value = false
-        _lockdown.value = false
+        instance = null
         runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(networkCallback) }
         super.onDestroy()
     }
@@ -151,7 +151,7 @@ class DnsVpnService : VpnService() {
         tunnel?.stop()
         tunnel = null
         _running.value = false
-        _lockdown.value = false
+        instance = null
         runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(networkCallback) }
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -272,10 +272,13 @@ class DnsVpnService : VpnService() {
         /** True while the tunnel is up in this process. */
         val running: StateFlow<Boolean> = _running.asStateFlow()
 
-        private val _lockdown = MutableStateFlow(false)
+        @Volatile private var instance: DnsVpnService? = null
 
-        /** True while running under "Block connections without VPN", which cuts off non-DNS traffic. */
-        val lockdown: StateFlow<Boolean> = _lockdown.asStateFlow()
+        /**
+         * True while running under "Block connections without VPN", which cuts off non-DNS
+         * traffic. Asked live: the user can switch lockdown off without the tunnel restarting.
+         */
+        val lockdown: Boolean get() = instance?.isLockdownEnabled == true
 
         /** Starts the VPN. Consent must already be given ([VpnService.prepare] returns null). */
         fun start(context: Context) {
