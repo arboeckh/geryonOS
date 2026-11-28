@@ -33,9 +33,21 @@ object DnsFilter {
     /** Allowed now but named by the catalogue, so a profile or expiring grant could block it soon. */
     const val POLICY_TTL = 10
 
-    fun handle(message: ByteArray, policy: Policy, now: Long = System.currentTimeMillis()): DnsVerdict {
+    /**
+     * [systemHost] is a name the phone itself depends on (the strict Private DNS server).
+     * It and its subdomains are always forwarded, even if a list blocks them, so geryon can
+     * never cut the phone off from its own DNS.
+     */
+    fun handle(
+        message: ByteArray,
+        policy: Policy,
+        now: Long = System.currentTimeMillis(),
+        systemHost: String? = null,
+    ): DnsVerdict {
         val q = DnsMessage.parseQuery(message)
             ?: return DnsMessage.formatError(message)?.let { DnsVerdict.Reply(it) } ?: DnsVerdict.Drop
+
+        if (systemHost != null && isSameOrSubdomain(q.name, systemHost)) return DnsVerdict.Forward(q, null)
 
         val subject = Subject.Domain(q.name)
         val d = policy.decide(subject, now)
@@ -49,5 +61,11 @@ object DnsFilter {
             Layer.Default, Layer.Hard -> if (policy.index.match(subject).isEmpty) null else POLICY_TTL
         }
         return DnsVerdict.Forward(q, maxTtl)
+    }
+
+    internal fun isSameOrSubdomain(name: String, host: String): Boolean {
+        val n = name.trimEnd('.').lowercase()
+        val h = host.trimEnd('.').lowercase()
+        return n == h || n.endsWith(".$h")
     }
 }

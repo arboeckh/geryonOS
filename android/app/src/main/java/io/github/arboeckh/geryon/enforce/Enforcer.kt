@@ -22,6 +22,15 @@ interface Enforcer {
 
     /** Where to send the user to turn it on, or null if it can't be turned on from here. */
     fun setupIntent(context: Context): Intent?
+
+    /**
+     * Device settings that stop this enforcer from working properly even though it is on,
+     * e.g. a VPN lockdown that cuts off the internet. Shown on the home screen.
+     */
+    fun problems(context: Context): List<EnforcerProblem> = emptyList()
 }
 
 enum class EnforcerStatus { Running, NeedsSetup, Unsupported }
+
+/** Something the user has to change in the phone's settings. [fix] opens the right screen. */
+data class EnforcerProblem(val title: String, val body: String, val fix: Intent?, val fixLabel: String = "Open settings")

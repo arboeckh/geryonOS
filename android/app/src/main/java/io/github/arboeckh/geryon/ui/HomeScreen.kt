@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import io.github.arboeckh.geryon.block.BlockConfig
 import io.github.arboeckh.geryon.block.BlockState
 import io.github.arboeckh.geryon.block.Catalog
+import io.github.arboeckh.geryon.enforce.EnforcerProblem
 import io.github.arboeckh.geryon.enforce.EnforcerStatus
 
 data class EnforcerRow(
@@ -36,6 +37,8 @@ data class EnforcerRow(
     val description: String,
     val status: EnforcerStatus,
     val canSetUp: Boolean,
+    /** Settings that stop it from working even though it is on. */
+    val problems: List<EnforcerProblem> = emptyList(),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +57,7 @@ fun HomeScreen(
     onSetUpEnforcer: (String) -> Unit,
     onOpenNfcSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    onFixProblem: (EnforcerProblem) -> Unit = {},
 ) {
     val base = config.profile(config.baseProfileId)
     val profiles = state.activeProfiles.filter { it.until == null || it.until > now }.sortedByDescending { it.startedAt }
@@ -92,6 +96,15 @@ fun HomeScreen(
                     body = e.description,
                     action = if (e.canSetUp && e.status == EnforcerStatus.NeedsSetup) "Set up" else null,
                     onAction = { onSetUpEnforcer(e.id) },
+                )
+            }
+
+            items(enforcers.flatMap { e -> e.problems.map { e.id to it } }, key = { (id, p) -> "problem-$id-${p.title}" }) { (_, p) ->
+                WarningCard(
+                    title = p.title,
+                    body = p.body,
+                    action = if (p.fix != null) p.fixLabel else null,
+                    onAction = { onFixProblem(p) },
                 )
             }
 

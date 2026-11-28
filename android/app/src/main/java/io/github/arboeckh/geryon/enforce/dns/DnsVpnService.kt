@@ -7,6 +7,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
@@ -44,6 +47,15 @@ class DnsVpnService : VpnService() {
 
     private var tunnel: Tunnel? = null
 
+    /** The strict Private DNS hostname of the real network, kept current by [networkCallback]. */
+    @Volatile private var privateDnsHost: String? = null
+
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) {
+            privateDnsHost = lp.privateDnsServerName?.takeIf { lp.isPrivateDnsActive }
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             shutdown()
@@ -64,6 +76,11 @@ class DnsVpnService : VpnService() {
             }
             tunnel = Tunnel(pfd).also { it.start() }
             _running.value = true
+            // A DNS-only VPN can't work under lockdown: everything outside the tunnel is dropped.
+            _lockdown.value = isLockdownEnabled
+            if (isLockdownEnabled) Log.w(TAG, "VPN lockdown is on: all non-DNS traffic will be blocked")
+            // geryon is excluded from its own VPN, so its default network is the real one.
+            runCatching { getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(networkCallback) }
         }
         return START_STICKY
     }
@@ -125,6 +142,8 @@ class DnsVpnService : VpnService() {
         tunnel?.stop()
         tunnel = null
         _running.value = false
+        _lockdown.value = false
+        runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(networkCallback) }
         super.onDestroy()
     }
 
@@ -132,6 +151,8 @@ class DnsVpnService : VpnService() {
         tunnel?.stop()
         tunnel = null
         _running.value = false
+        _lockdown.value = false
+        runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(networkCallback) }
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -185,7 +206,7 @@ class DnsVpnService : VpnService() {
         private fun onPacket(buf: ByteArray, len: Int) {
             val packet = IpUdp.parse(buf, len) ?: return // e.g. DoT on 853 or TCP fallback: dropped
             if (packet.dstPort != 53) return
-            when (val verdict = DnsFilter.handle(packet.payload, geryon.blocks.policy.value)) {
+            when (val verdict = DnsFilter.handle(packet.payload, geryon.blocks.policy.value, systemHost = privateDnsHost)) {
                 is DnsVerdict.Reply -> write(packet.reply(verdict.message))
                 is DnsVerdict.Forward -> scope.launch { forward(packet, verdict) }
                 DnsVerdict.Drop -> Unit
@@ -223,6 +244,7 @@ class DnsVpnService : VpnService() {
                     }
                 } catch (e: IOException) {
                     // Timeout, or no route (e.g. IPv6 upstream on an IPv4-only network): next one.
+                    Log.d(TAG, "Upstream $server failed: ${e.message}")
                 }
             }
             return null
@@ -249,6 +271,11 @@ class DnsVpnService : VpnService() {
 
         /** True while the tunnel is up in this process. */
         val running: StateFlow<Boolean> = _running.asStateFlow()
+
+        private val _lockdown = MutableStateFlow(false)
+
+        /** True while running under "Block connections without VPN", which cuts off non-DNS traffic. */
+        val lockdown: StateFlow<Boolean> = _lockdown.asStateFlow()
 
         /** Starts the VPN. Consent must already be given ([VpnService.prepare] returns null). */
         fun start(context: Context) {

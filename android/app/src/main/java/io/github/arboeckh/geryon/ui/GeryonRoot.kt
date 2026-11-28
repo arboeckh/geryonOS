@@ -88,7 +88,7 @@ fun GeryonRoot(model: AppModel) {
                     val enforcers = context.geryon.enforcers
                     val rows = remember(model.resumeCount, enforcers) {
                         enforcers.map { e ->
-                            EnforcerRow(e.id, e.label, e.description, e.status(context), e.setupIntent(context) != null)
+                            EnforcerRow(e.id, e.label, e.description, e.status(context), e.setupIntent(context) != null, e.problems(context))
                         }
                     }
                     HomeScreen(
@@ -104,6 +104,9 @@ fun GeryonRoot(model: AppModel) {
                         onEndGrant = blocks::endGrant,
                         onSetUpEnforcer = { id -> setUp(context, enforcers.firstOrNull { it.id == id }) },
                         onOpenNfcSettings = openNfcSettings,
+                        onFixProblem = { p ->
+                            p.fix?.let { runCatching { context.startActivity(it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+                        },
                     )
                 }
                 Screen.Tags -> TagsScreen(

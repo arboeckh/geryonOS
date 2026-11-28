@@ -52,6 +52,17 @@ class DnsFilterTest {
         assertEquals(DnsFilter.BLOCK_TTL, answerTtl(v.message))
     }
 
+    @Test fun `the phone's own Private DNS server is never blocked, even when a hard list names it`() {
+        val host = "abc123.casino.example"
+        val v = DnsFilter.handle(query(host, DnsMessage.TYPE_A), policy(), now, systemHost = host)
+        assertTrue(v is DnsVerdict.Forward)
+        assertNull((v as DnsVerdict.Forward).maxTtl)
+        assertTrue(DnsFilter.handle(query("x.$host", DnsMessage.TYPE_A), policy(), now, systemHost = "$host.") is DnsVerdict.Forward)
+        // Its parent domain and siblings stay blocked.
+        assertTrue(DnsFilter.handle(query("casino.example", DnsMessage.TYPE_A), policy(), now, systemHost = host) is DnsVerdict.Reply)
+        assertTrue(DnsFilter.handle(query("other.casino.example", DnsMessage.TYPE_A), policy(), now, systemHost = host) is DnsVerdict.Reply)
+    }
+
     @Test fun `hard-blocked domain from an external list gets a long TTL`() {
         val v = DnsFilter.handle(query("www.casino.example", DnsMessage.TYPE_A), policy(), now) as DnsVerdict.Reply
         assertEquals(DnsFilter.HARD_BLOCK_TTL, answerTtl(v.message))
