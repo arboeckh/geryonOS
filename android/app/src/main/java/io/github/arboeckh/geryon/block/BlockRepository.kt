@@ -123,6 +123,18 @@ class BlockRepository(
 
     fun endGrant(targetId: String) = _state.update { s -> s.copy(grants = s.grants.filterNot { it.targetId == targetId }) }
 
+    // --- Direct control from the UI (same transitions as the matching tags) ---------------
+
+    /** Same as a toggle tag: flips a profile on/off, or pauses/resumes the base profile. */
+    fun toggleProfile(profileId: String) {
+        val now = clock()
+        _state.update { Actions.toggleProfile(Actions.prune(it, now), _config.value, profileId, now) }
+    }
+
+    /** Ends a running (timed or untimed) profile early. */
+    fun endProfile(profileId: String) =
+        _state.update { s -> s.copy(activeProfiles = s.activeProfiles.filterNot { it.profileId == profileId }) }
+
     // --- Config editing ------------------------------------------------------------------
 
     fun bindTag(binding: TagBinding) = _config.update { c ->
