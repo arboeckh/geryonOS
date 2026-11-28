@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Geryon" parent="android:Theme.Material.NoActionBar" />
+
+    <!-- For screens that only show system dialogs, e.g. VPN consent. -->
+    <style name="Theme.Geryon.Translucent" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
 </resources>

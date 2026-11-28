@@ -47,8 +47,11 @@ fun readTag(tag: Tag): TagScan {
  * Writes a fresh geryon://tag/<id> record plus an Android Application Record,
  * so tapping the tag always opens this app. Formats blank tags if needed.
  */
-fun writeGeryonTag(tag: Tag, packageName: String): Result<TagScan> = runCatching {
-    val id = UUID.randomUUID().toString().substring(0, 8)
+fun writeGeryonTag(
+    tag: Tag,
+    packageName: String,
+    id: String = UUID.randomUUID().toString().substring(0, 8),
+): Result<TagScan> = runCatching {
     val uri = Uri.Builder().scheme(TAG_SCHEME).authority(TAG_HOST).appendPath(id).build()
     val message = NdefMessage(
         arrayOf(

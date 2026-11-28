@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">geryon</string>
+    <string name="app_blocker_label">geryon app blocker</string>
+    <string name="app_blocker_description">Lets geryon close apps you have blocked. geryon only looks at which app is in front, never at what is on screen.</string>
+    <string name="dns_vpn_session">geryon website blocker</string>
+    <string name="dns_vpn_channel">Website blocker</string>
+    <string name="dns_vpn_notification_title">Website blocker on</string>
+    <string name="dns_vpn_notification_text">Filtering DNS on this phone. Nothing leaves the device through this VPN.</string>
+    <string name="dns_vpn_consent_denied">Website blocker needs the VPN permission to run.</string>
+    <string name="dns_vpn_unsupported">This device doesn\'t support VPN apps.</string>
 </resources>

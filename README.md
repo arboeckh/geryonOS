@@ -15,3 +15,16 @@ Needs JDK 17 and the Android SDK (platform 37.2), with `sdk.dir` set in `android
 ```bash
 cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew :app:installDebug
 ```
+
+## Blocking
+
+Code lives in `android/app/src/main/java/io/github/arboeckh/geryon/`.
+
+- `block/`: the rule engine. It has no Android dependencies apart from `BlockRepository`.
+  - **Catalogue** (`assets/catalog.json`): *targets* (one app plus its domains, e.g. YouTube) and *categories* (groups of targets plus domains). A category marked `hard` is always blocked.
+  - **Config**: *profiles* (block or allow rules on targets and categories), the always-on base profile, and *tag bindings* (tag id → action).
+  - **State**: active profiles, timed grants, and whether the base profile is paused.
+  - **Policy**: decides each app or domain. The stack, top layer wins: hard → grants → active profiles (newest first) → base → allow.
+- `enforce/`: carries out the policy. `AppBlocker` is an accessibility service that covers a blocked app with an overlay the moment it opens, then sends it home. Domain blocking is a DNS VPN (in progress).
+
+Tag actions: start a profile on a timer, toggle a profile, grant (pick one target to unlock for N minutes), and lockdown (clear grants and resume the base profile).

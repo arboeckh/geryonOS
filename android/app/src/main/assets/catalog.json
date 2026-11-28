@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "targets": [
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "packages": ["com.google.android.youtube", "com.google.android.apps.youtube.music", "app.revanced.android.youtube"],
+      "domains": ["youtube.com", "youtu.be", "ytimg.com", "googlevideo.com", "youtube-nocookie.com", "youtubei.googleapis.com", "music.youtube.com"]
+    },
+    {
+      "id": "instagram",
+      "name": "Instagram",
+      "packages": ["com.instagram.android", "com.instagram.lite"],
+      "domains": ["instagram.com", "cdninstagram.com", "ig.me", "fbcdn.net"]
+    },
+    {
+      "id": "facebook",
+      "name": "Facebook",
+      "packages": ["com.facebook.katana", "com.facebook.lite"],
+      "domains": ["facebook.com", "fb.com", "fb.me", "fb.watch", "facebook.net", "fbcdn.net", "fbsbx.com"]
+    },
+    {
+      "id": "threads",
+      "name": "Threads",
+      "packages": ["com.instagram.barcelona"],
+      "domains": ["threads.net", "threads.com"]
+    },
+    {
+      "id": "tiktok",
+      "name": "TikTok",
+      "packages": ["com.zhiliaoapp.musically", "com.ss.android.ugc.trill", "com.zhiliaoapp.musically.go"],
+      "domains": ["tiktok.com", "tiktokv.com", "tiktokcdn.com", "tiktokcdn-us.com", "byteoversea.com", "ibytedtos.com", "musical.ly"]
+    },
+    {
+      "id": "x",
+      "name": "X (Twitter)",
+      "packages": ["com.twitter.android"],
+      "domains": ["x.com", "twitter.com", "twimg.com", "t.co"]
+    },
+    {
+      "id": "reddit",
+      "name": "Reddit",
+      "packages": ["com.reddit.frontpage"],
+      "domains": ["reddit.com", "redd.it", "redditmedia.com", "redditstatic.com"]
+    },
+    {
+      "id": "snapchat",
+      "name": "Snapchat",
+      "packages": ["com.snapchat.android"],
+      "domains": ["snapchat.com", "sc-cdn.net", "snap-dev.net"]
+    },
+    {
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "packages": ["com.linkedin.android"],
+      "domains": ["linkedin.com", "licdn.com", "lnkd.in"]
+    },
+    {
+      "id": "pinterest",
+      "name": "Pinterest",
+      "packages": ["com.pinterest"],
+      "domains": ["pinterest.com", "pinimg.com", "pin.it"]
+    },
+    {
+      "id": "twitch",
+      "name": "Twitch",
+      "packages": ["tv.twitch.android.app"],
+      "domains": ["twitch.tv", "ttvnw.net", "jtvnw.net"]
+    },
+    {
+      "id": "netflix",
+      "name": "Netflix",
+      "packages": ["com.netflix.mediaclient"],
+      "domains": ["netflix.com", "nflxvideo.net", "nflximg.net", "nflxext.com", "nflxso.net"]
+    }
+  ],
+  "categories": [
+    {
+      "id": "social",
+      "name": "Social media",
+      "targets": ["instagram", "facebook", "threads", "tiktok", "x", "reddit", "snapchat", "linkedin", "pinterest"]
+    },
+    {
+      "id": "video",
+      "name": "Video",
+      "targets": ["youtube", "twitch", "netflix"]
+    },
+    {
+      "id": "adult",
+      "name": "Adult",
+      "hard": true,
+      "domains": ["pornhub.com", "xvideos.com", "xnxx.com", "xhamster.com", "redtube.com", "youporn.com", "onlyfans.com", "chaturbate.com", "stripchat.com", "spankbang.com", "eporner.com"]
+    },
+    {
+      "id": "gambling",
+      "name": "Gambling",
+      "hard": true,
+      "domains": ["bet365.com", "pokerstars.com", "draftkings.com", "fanduel.com", "betway.com", "williamhill.com", "stake.com", "888casino.com", "betfair.com", "paddypower.com", "unibet.com", "bwin.com"]
+    },
+    {
+      "id": "doh",
+      "name": "Encrypted DNS",
+      "hard": true,
+      "domains": ["use-application-dns.net", "dns.google", "dns.google.com", "cloudflare-dns.com", "one.one.one.one", "dns.quad9.net", "dns.adguard-dns.com", "dns.adguard.com", "doh.opendns.com", "dns.nextdns.io", "doh.cleanbrowsing.org", "doh.mullvad.net", "dns.mullvad.net", "dns.controld.com", "freedns.controld.com"]
+    }
+  ]
+}
